@@ -1,3 +1,4 @@
+local QBCore = exports['qb-core']:GetCoreObject()
 InBank = false
 blips = {}
 local banks
@@ -64,6 +65,19 @@ function openAccountScreen()
     end)
 end
 
+function openbankDisabled()
+    QBCore.Functions.TriggerCallback('qb-banking:getBankingInformation', function(banking)
+        if banking ~= nil then
+            InBank = true
+            SetNuiFocus(true, true)
+            SendNUIMessage({
+                status = "bankdisabled",
+                information = banking
+            })
+        end        
+    end)
+end
+
 function atmRefresh()
     QBCore.Functions.TriggerCallback('qb-banking:getBankingInformation', function(infor)
         InBank = true
@@ -77,7 +91,14 @@ end
 
 RegisterNetEvent('qb-banking:openBankScreen')
 AddEventHandler('qb-banking:openBankScreen', function()
-    openAccountScreen()
+    QBCore.Functions.TriggerCallback('qb-banking:server:checkbank', function(result)
+        print(result)
+        if result == "true" then
+            openAccountScreen()
+        else
+            openbankDisabled()
+        end
+    end)
 end)
 
 local letSleep = true
@@ -99,7 +120,7 @@ Citizen.CreateThread(function()
                         DrawText3Ds(v.x, v.y, v.z-0.25, '~g~E~w~ - Access Bank')
 
                         if IsControlJustPressed(0, 38) then
-                            openAccountScreen()
+                            TriggerEvent('qb-banking:openBankScreen')
                         end
                     end
                 end
@@ -142,5 +163,19 @@ AddEventHandler('qb-banking:successAlert', function(msg)
     SendNUIMessage({
         status = "successMessage",
         message = msg
+    })
+end)
+RegisterNetEvent('qb-banking:loginsucess')
+AddEventHandler('qb-banking:loginsucess', function(acc)
+    SendNUIMessage({
+        status = "loginsucess",
+        accdata = acc
+    })
+end)
+RegisterNetEvent('qb-banking:bizrefresh')
+AddEventHandler('qb-banking:bizrefresh', function(acc)
+    SendNUIMessage({
+        status = "bizrefresh",
+        accdata = acc
     })
 end)
