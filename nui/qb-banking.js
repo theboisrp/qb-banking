@@ -1,10 +1,11 @@
 var Config = new Object();
-Config.closeKeys = [69, 27];
+Config.closeKeys = [27];
 Config.ATMTransLimit = 5000;
 var currentLimit = null;
 var clientPin = null;
-
-window.addEventListener("message", function (event) {
+var bizaccdata = null;
+var cash = null;
+window.addEventListener("message", function (event) {    
     if(event.data.status == "openbank") {
         /*$("#cardDetails").css({"display":"none"});*/
         $("#createNewPin").css({"display":"none"});
@@ -19,6 +20,8 @@ window.addEventListener("message", function (event) {
         $("#accountName").html(event.data.information.name)
         $("#accountNumber").html(event.data.information.accountinfo);
         $("#accountSortCode").html(event.data.information.accountinfo.sort_code);
+        //$("#test1").html(event.data.information);
+        //$("#test2").html(event.data.information.card);
 
         $('#newPinNumber').val('');
         $("#bankingHome-tab").addClass('active');
@@ -28,9 +31,11 @@ window.addEventListener("message", function (event) {
         $("#bankingStatement-tab").removeClass('active');
         $("#bankingActions-tab").removeClass('active');
         $("#bankingSavings-tab").removeClass('active');
+        $("#bankingBusiness-tab").removeClass('active');
         $("#bankingHome").addClass('active').addClass('show');
         $("#bankingWithdraw").removeClass('active').removeClass('show');
         $("#bankingSavings").removeClass('active').removeClass('show');
+        $("#bankingBusiness").removeClass('active').removeClass('show');
         $("#bankingDeposit").removeClass('active').removeClass('show');
         $("#bankingTransfer").removeClass('active').removeClass('show');
         $("#bankingStatement").removeClass('active').removeClass('show');
@@ -44,15 +49,19 @@ window.addEventListener("message", function (event) {
         $("#savingAccountCreator").css({"display":"block"});
         $("#savingsQuicky1").css({"display":"none"});
         $("#bankingSavings-tab").css({"display":"none"});
+        //$("#bankingBusiness").css({"display":"none"});
         $("#savingsQuicky2").css({"display":"none"});
         if(event.data.information.savings !== undefined && event.data.information.savings !== null) {
             setupSavingsMenu(event.data.information.savings, event.data.information.name);
         } else {
             enableSavingsCreator();
         }
-        if(event.data.information.cardInformation !== undefined && event.data.information.cardInformation !== null) {
-            $('#cardType').html(event.data.information.cardInformation.type)
-            var str = ""+ event.data.information.cardInformation.cardNumber + "";
+        
+        //this.print(event.data.information)
+        //this.print(event.data.information.card)
+        if(event.data.information.card !== undefined && event.data.information.card !== null) {
+            //$('#cardType').html(event.data.information.cardInformation.type)
+            var str = ""+ event.data.information.card.cardNumber + "";
             var res = str.slice(12);
             var cardNumber = "************" + res;
             $('#cardNumberShow').html(cardNumber)
@@ -60,15 +69,17 @@ window.addEventListener("message", function (event) {
         populateBanking(event.data.information);
         $("#bankingContainer").css({"display":"block"});
 
-    }
-    else if (event.data.status == "updateCard") {
+    } else if (event.data.status == "updateCard") {
         $('#cardType').html(event.data.cardtype)
         var str = ""+ event.data.number + "";
         var res = str.slice(12);
         var cardNumber = "************" + res;
         $('#cardNumberShow').html(cardNumber)
-    }
-    else if (event.data.status == "closebank") {
+    } else if (event.data.status == "closebank") {
+        $("#bankdisabled").css({"display":"none"});
+        $("#bankingContainer").css({"display":"none"});
+        $("#businesslogin").css({"display":"block"});
+        $("#businessmain").css({"display":"none"});
         $("#cardDetails").css({"display":"none"});
         $("#createNewPin").css({"display":"none"});
         $("#bankingHomeATM, #bankingWithdrawATM, #bankingStatementATM").removeClass('show').removeClass('active');
@@ -102,6 +113,55 @@ window.addEventListener("message", function (event) {
             $("#successRow").css({"display":"block"});
             $("#successMessage").html(event.data.message);
         }
+    } else if (event.data.status == "loginsucess") {
+        $("#businesslogin").css({"display":"none"});
+        $("#businessmain").css({"display":"block"});
+        bizaccdata = event.data.accdata;
+        $("#bizcurrentCashBalance").html(cash);
+        $("#bizcurrentBalance").html("$" + bizaccdata.bizamount);
+        $("#bizcustomerName").html(bizaccdata.bizname);
+        $("#bizaccn").html(bizaccn.bizaccn);
+        if(bizaccdata.card !== undefined) {
+            if (bizaccdata.card.cardLocked == true) {
+                $("#bizdebitCardStatus").removeClass('bg-success');
+                $("#bizdebitCardStatus").addClass('bg-danger');
+                $("#bizdebitCardStatus").html('<div class="card-header">Card Locked</div><div class="card-body">Your card is currently LOCKED.</div><div class="card-footer"><button class="btn btn-primary btn-block" id="unLockCard">Unlock/Unblock Card</button></div>');
+            } else {
+                $("#bizdebitCardStatus").removeClass('bg-danger');
+            $("#bizdebitCardStatus").addClass('bg-success');
+            $("#bizdebitCardStatus").html('<div class="card-header">Card Unlocked</div><div class="card-body">Your card is currently active.</div><div class="card-footer"><button class="btn btn-primary btn-block" id="lockCard">Lock/Block Card</button></div>');
+            }
+            $("#bizcardDetails").css({"display":"block"});
+        } else {
+            $("#bizcardOrdering").css({"display":"none"});
+            $("#bizcardInactive").css({"display":"block"});
+        }
+    } else if (event.data.status == "bizrefresh") {
+        $("#businesslogin").css({"display":"none"});
+        $("#businessmain").css({"display":"block"});
+        bizaccdata = event.data.accdata;
+        $("#bizcurrentCashBalance").html(cash);
+        $("#bizcurrentBalance").html("$" + bizaccdata.bizamount);
+        $("#bizcustomerName").html(bizaccdata.bizname);
+        $("#bizaccn").html(bizaccn.bizaccn);
+        if(data.card !== undefined) {
+            if (data.card.cardLocked == true) {
+                $("#debitCardStatus").removeClass('bg-success');
+                $("#debitCardStatus").addClass('bg-danger');
+                $("#debitCardStatus").html('<div class="card-header">Card Locked</div><div class="card-body">Your card is currently LOCKED.</div><div class="card-footer"><button class="btn btn-primary btn-block" id="unLockCard">Unlock/Unblock Card</button></div>');
+            } else {
+                $("#debitCardStatus").removeClass('bg-danger');
+            $("#debitCardStatus").addClass('bg-success');
+            $("#debitCardStatus").html('<div class="card-header">Card Unlocked</div><div class="card-body">Your card is currently active.</div><div class="card-footer"><button class="btn btn-primary btn-block" id="lockCard">Lock/Block Card</button></div>');
+            }
+            $("#cardDetails").css({"display":"block"});
+        } else {
+            $("#cardOrdering").css({"display":"none"});
+            $("#cardInactive").css({"display":"block"});
+        }
+    } else if (event.data.status == "bankdisabled") {
+        $("#bankdisabled").css({"display":"block"});
+        $("#bankingContainer").css({"display":"none"});
     }
 });
 
@@ -170,6 +230,11 @@ function enableSavingsCreator()
     $("#savingAccountCreator").css({"display":"block"});
 }
 
+function enableBisCreator()
+{
+    $("#bisAccountCreator").css({"display":"block"});
+}
+
 function populateBanking(data)
 {
     $('#newPinNumber').val('');
@@ -180,13 +245,14 @@ function populateBanking(data)
     $("#customerName").html(data.name);
     $("#currentBalance").html(data.bankbalance);
     $("#currentCashBalance").html(data.cash);
+    cash = data.cash
     $("#currentBalance1").html(data.bankbalance);
     $("#currentCashBalance1").html(data.cash);
     $("#currentBalance2").html(data.bankbalance);
     $("#currentCashBalance2").html(data.cash);
     $("#currentStatementContents").html('');
-    if(data.cardInformation !== undefined) {
-        if (data.cardInformation.cardLocked == true) {
+    if(data.card !== undefined) {
+        if (data.card.cardLocked == true) {
             $("#debitCardStatus").removeClass('bg-success');
             $("#debitCardStatus").addClass('bg-danger');
             $("#debitCardStatus").html('<div class="card-header">Card Locked</div><div class="card-body">Your card is currently LOCKED.</div><div class="card-footer"><button class="btn btn-primary btn-block" id="unLockCard">Unlock/Unblock Card</button></div>');
@@ -308,6 +374,24 @@ $(function() {
         }
     });
 
+    $("#bizinitiateWithdraw").click(function() {
+        var amount = $('#bizwithdrawAmount').val();
+
+        if(amount !== undefined && amount > 0) {
+            $("#bizwithdrawError").css({"display":"none"});
+            $("#bizwithdrawErrorMsg").html('');
+            $.post('https://qb-banking/doBizWithdraw', JSON.stringify({ 
+                amount: parseInt(amount),
+                bizacc: bizaccdata
+            }));
+            $('#bizwithdrawAmount').val('')
+        } else {
+            // Error doing withdraw
+            $("#bizwithdrawError").css({"display":"block"});
+            $("#bizwithdrawErrorMsg").html('There was an error processing your withdraw, either the amount has not been entered, or is not a positive number');
+        }
+    });
+
     $("#initiateWithdrawATM").click(function() {
         var amount = $('#withdrawAmountATM').val();
         if (currentLimit + parseInt(amount) <= Config.ATMTransLimit) {
@@ -335,20 +419,23 @@ $(function() {
         }
     });
 
-    $("#initiateDeposit").click(function() {
-        var amount = $('#depositAmount').val();
+    $("#bizinitiateDeposit").click(function() {
+        var amount = $('#bizdepositAmount').val();
 
         if(amount !== undefined && amount > 0) {
             $("#depositError").css({"display":"none"});
             $("#depositErrorMsg").html('');
-            $.post('https://qb-banking/doDeposit', JSON.stringify({
-                amount: parseInt(amount)
+            $("#bizdepositError").css({"display":"none"});
+            $("#bizdepositErrorMsg").html('');
+            $.post('https://qb-banking/doBizDeposit', JSON.stringify({ 
+                amount: parseInt(amount),
+                bizacc: bizaccdata
             }));
-            $('#depositAmount').val('');
+            $('#bizdepositAmount').val('');
         } else {
             // Error doing withdraw
-            $("#depositError").css({"display":"block"});
-            $("#depositErrorMsg").html('There was an error processing your deposit, either the amount has not been entered, or is not a positive number');
+            $("#bizdepositError").css({"display":"block"});
+            $("#bizdepositErrorMsg").html('There was an error processing your deposit, either the amount has not been entered, or is not a positive number');
         }
     });
 
@@ -361,10 +448,52 @@ $(function() {
         }
     });
 
+
+
+    //biz deposit
+    $("[data-action=bizdeposit]").click(function() {
+        var amount = $(this).attr('data-amount');
+        if(amount > 0) {
+            $.post('https://qb-banking/doBizDeposit', JSON.stringify({ 
+                amount: parseInt(amount),
+                bizacc: bizaccdata
+            }));
+        }
+    });
+    //biz deposit
+
+
+
     $("#orderCardBtn").click(function() {
         $("#cardInactive").css({"display":"none"});
         $("#cardOrdering").css({"display":"block"});
     });
+
+    $("#bizorderCardBtn").click(function() {
+        $("#bizcardInactive").css({"display":"none"});
+        $("#bizcardOrdering").css({"display":"block"});
+    });
+
+    $("#bizlogout").click(function() {
+        $("#businesslogin").css({"display":"block"});
+        $("#businessmain").css({"display":"none"});
+    });
+
+    //open biz
+    $("#openbusiness").click(function() {
+        $("#businesscreatormain").css({"display":"none"});
+        $("#bizaccountcreator").css({"display":"block"});
+    });
+    $("#createbusiness").click(function() {
+        $.post('https://qb-banking/createbusinessaccount', JSON.stringify({ 
+            bname: $('#bname').val(),
+            bid: $('#bid').val(),
+            bpass: $('#bpass').val()
+        }));
+    });
+    //open biz
+
+
 
     $("#processCard").click(function() {
         var pinValue = $('#cardPinNumber').val();
@@ -372,8 +501,9 @@ $(function() {
         if(pinValue !== null && pinValue !== undefined && pinValue.replace(/[^0-9]/g,"").length === 4) {
             $("#pinCreatorError").css({"display":"none"});
             $("#pinCreatorErrorMsg").html('');
-            $.post('https://qb-banking/createDebitCard', JSON.stringify({
-                pin: pad(pinValue, 4)
+            $.post('https://qb-banking/createDebitCard', JSON.stringify({ 
+                pin: pad(pinValue, 4),
+                bizacc: null
             }));
         } else {
             $("#pinCreatorError").css({"display":"block"});
@@ -382,18 +512,34 @@ $(function() {
 
     });
 
+    $("#bizprocessCard").click(function() {
+        var pinValue = $('#bizcardPinNumber').val();
+        console.log(pinValue.replace(/[^0-9]/g,"").length);
+        if(pinValue !== null && pinValue !== undefined && pinValue.replace(/[^0-9]/g,"").length === 4) {
+            $("#bizpinCreatorError").css({"display":"none"});
+            $("#bizpinCreatorErrorMsg").html('');
+            $.post('https://qb-banking/createDebitCard', JSON.stringify({ 
+                pin: pad(pinValue, 4),
+                bizacc: bizaccdata
+            }));
+        } else {
+            $("#bizpinCreatorError").css({"display":"block"});
+            $("#bizpinCreatorErrorMsg").html('There was an error with the pin you tried to create, please make up a random number which is 4 digits in length.');
+        }
+
+    });
+
     $("#initiateTransfer").click(function() {
         var amount = $('#transferAmount').val();
-        var sortcode = $('#transferSortCode').val();
         var account = $('#transferAcctNo').val();
 
-        if(amount !== undefined && amount !== null && amount > 0 && sortcode !== undefined && sortcode !== null && sortcode > 0 && account !== undefined && account !== null && account > 0) {
+        if(amount !== undefined && amount !== null && account !== undefined && account !== null) {
             $("#transferError").css({"display":"none"});
             $("#transferErrorMsg").html('');
             $.post('https://qb-banking/doTransfer', JSON.stringify({
                 amount: parseInt(amount),
-                account: parseInt(account),
-                sortcode: parseInt(sortcode)
+                account: account,
+                bizacc: null
             }));
             $('#transferAmount').val('');
             $('#transferSortCode').val('');
@@ -404,7 +550,28 @@ $(function() {
         }
 
     });
+    $("#bizinitiateTransfer").click(function() {
+        var amount = $('#biztransferAmount').val();
+        var account = $('#biztransferAcctNo').val();
 
+        if(amount !== undefined && amount !== null && account !== undefined && account !== null) {
+            $("#biztransferError").css({"display":"none"});
+            $("#biztransferErrorMsg").html('');
+            $.post('https://qb-banking/doTransfer', JSON.stringify({ 
+                amount: parseInt(amount),
+                account: account,
+                bizacc: bizaccdata
+            }));
+            $('#biztransferAmount').val('');
+            $('#biztransferSortCode').val('');
+            $('#biztransferAcctNo').val('');
+        } else {
+            $("#biztransferError").css({"display":"block"});
+            $("#biztransferErrorMsg").html('There was an error with the information you have entered, please ensure the account number, sort code and amount is correctly filled out.');
+        }
+        
+    });
+    
     $("[data-action=withdraw]").click(function() {
         var amount = $(this).attr('data-amount');
         if(amount > 0) {
@@ -413,6 +580,24 @@ $(function() {
             }));
         }
     });
+
+
+
+
+    //biz withdraw
+    $("[data-action=bizwithdraw]").click(function() {
+        var amount = $(this).attr('data-amount');
+        if(amount > 0) {
+            $.post('https://qb-banking/doBizWithdraw', JSON.stringify({ 
+                amount: parseInt(amount),
+                bizacc: bizaccdata
+            }));
+        }
+    });
+    //biz withdraw
+
+
+
 
     $("[data-action=ATMwithdraw]").click(function() {
         var amount = $(this).attr('data-amount');
@@ -467,6 +652,13 @@ $(function() {
          }, 5000);
     });
 
+    $("#businesssignin").click(function() {
+        $.post('https://qb-banking/businesssignin', JSON.stringify({ 
+            bizid: $("#businessidlogin").val(),
+            bpass: $("#businesspasslogin").val()
+        }));
+    });
+    
     $("#makeSavingsTransfer").click(function() {
         var amount = $("#savingsTAmount").val();
         var action = $("#savingsAction").val();

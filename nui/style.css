@@ -7,6 +7,22 @@
 body {
     background: transparent !important;
     margin-top: 80px;
+    
+}
+
+#bdtext {
+    color: white;
+    outline: red;
+    text-align: center;
+    margin-top: 50%;
+}
+
+#bankdisabled {
+    background: #444444 !important;
+    border-radius: 7px;
+    min-height: 800px;
+    max-height: 800px;
+    display: none;
 }
 
 #bankingContainer {
